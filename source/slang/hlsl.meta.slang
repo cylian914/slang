@@ -23166,6 +23166,8 @@ struct HitObject
         case cuda: __intrinsic_asm "slangOptixHitObjectSetSbtRecordIndex";
         case _GL_EXT_shader_invocation_reorder:
             __intrinsic_asm "hitObjectSetShaderBindingTableRecordIndexEXT($0, $RecordIndex)";
+        case spvShaderInvocationReorderNV:
+            static_assert(false, "SetShaderTableIndex() has no SPIRV NV equivalent (OpHitObjectSetShaderBindingTableRecordIndexNV does not exist). Use SPV_EXT_shader_invocation_reorder instead.");
         case spvShaderInvocationReorderEXT:
             spirv_asm
             {
@@ -23718,6 +23720,9 @@ struct HitObject
         {
         case hlsl: __intrinsic_asm ".GetRayFlags";
         case _GL_EXT_shader_invocation_reorder: __intrinsic_asm "hitObjectGetRayFlagsEXT($0)";
+        case spvShaderInvocationReorderNV:
+            static_assert(false, "GetRayFlags() has no SPIRV NV equivalent (OpHitObjectGetRayFlagsNV does not exist). Use GetRayDesc() or SPV_EXT_shader_invocation_reorder instead.");
+            return 0u;
         case spvShaderInvocationReorderEXT:
             return spirv_asm
             {
@@ -23740,6 +23745,13 @@ struct HitObject
         {
         case hlsl: __intrinsic_asm ".GetRayTMin";
         case _GL_EXT_shader_invocation_reorder: __intrinsic_asm "hitObjectGetRayTMinEXT($0)";
+        case spvShaderInvocationReorderNV:
+            return spirv_asm
+            {
+                OpExtension "SPV_NV_shader_invocation_reorder";
+                OpCapability ShaderInvocationReorderNV;
+                result:$$float = OpHitObjectGetRayTMinNV &this;
+            };
         case spvShaderInvocationReorderEXT:
             return spirv_asm
             {
@@ -23751,14 +23763,16 @@ struct HitObject
     }
 
         /// Returns the parametric ending point (T value at hit/miss). Valid if the hit object represents a hit or a miss.
-        /// DXR 1.3 only.
+        /// DXR 1.3 and OptiX.
     [ForceInline]
     [require(hlsl, ser_dxr_raygen_closesthit_miss)]
+    [require(cuda, ser_raygen_closesthit_miss)]
     float GetRayTCurrent()
     {
         __target_switch
         {
         case hlsl: __intrinsic_asm ".GetRayTCurrent";
+        case cuda: __intrinsic_asm "slangOptixHitObjectGetRayTmax";
         }
     }
 
@@ -23774,6 +23788,13 @@ struct HitObject
         {
         case hlsl: __intrinsic_asm ".GetWorldRayOrigin";
         case _GL_EXT_shader_invocation_reorder: __intrinsic_asm "hitObjectGetWorldRayOriginEXT($0)";
+        case spvShaderInvocationReorderNV:
+            return spirv_asm
+            {
+                OpExtension "SPV_NV_shader_invocation_reorder";
+                OpCapability ShaderInvocationReorderNV;
+                result:$$float3 = OpHitObjectGetWorldRayOriginNV &this;
+            };
         case spvShaderInvocationReorderEXT:
             return spirv_asm
             {
@@ -23796,6 +23817,13 @@ struct HitObject
         {
         case hlsl: __intrinsic_asm ".GetWorldRayDirection";
         case _GL_EXT_shader_invocation_reorder: __intrinsic_asm "hitObjectGetWorldRayDirectionEXT($0)";
+        case spvShaderInvocationReorderNV:
+            return spirv_asm
+            {
+                OpExtension "SPV_NV_shader_invocation_reorder";
+                OpCapability ShaderInvocationReorderNV;
+                result:$$float3 = OpHitObjectGetWorldRayDirectionNV &this;
+            };
         case spvShaderInvocationReorderEXT:
             return spirv_asm
             {
